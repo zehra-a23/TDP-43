@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(forcats)
 my_clean_reader <- function(file){
   df = data.table::as.data.table(janitor::clean_names(data.table::fread(file)))
   return(df)
@@ -45,12 +46,15 @@ hallegger_kds = hallegger_kds |>
   dplyr::select(-lsv_type)
 # Find all the significantly spliced junctions, use probability_changing > 0.9 and the absolute value mean_dpsi_per_lsv_junction >= 0.2 
 significantly_spliced_junctions <- hallegger_kds |>
-filter(probability_changing > 0.9, mean_dpsi_per_lsv_junction >= 0.2 )
+  filter(probability_changing > 0.9, mean_dpsi_per_lsv_junction >= 0.2 )
 significantly_spliced_junctions
 # Which comparison has the most number of significant junctions, use the n_distinct function and the paste_into_igv_junction column 
 number_of_sig_junctions <- significantly_spliced_junctions |>
- group_by(comparison) |>
-  summarize(n_distinct(paste_into_igv_junction))
-number_of_sig_junctions
-                                          
-                                               
+  group_by(comparison) |>
+  summarize(n_junctions = n_distinct(paste_into_igv_junction))   
+# Make a plot of the number of significant junctions by the comparison
+number_of_sig_junctions |>
+  mutate(comparison = forcats::fct_reorder(comparison,n_junctions)) |>
+  ggplot(aes(x=comparison, y=n_junctions)) + 
+  geom_col() + 
+  coord_flip()
