@@ -1,4 +1,4 @@
-library(tidyverse)
+    library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(forcats)
@@ -58,3 +58,51 @@ number_of_sig_junctions |>
   ggplot(aes(x=comparison, y=n_junctions)) + 
   geom_col() + 
   coord_flip()
+# What splicing events are found in every mutation?
+number_of_comparisons <- significantly_spliced_junctions |>
+  group_by(paste_into_igv_junction) |>
+  summarize(n_comparison = n_distinct(comparison))   
+number_of_comparisons
+# What splicing event occurs most frequently?
+ max_splicing_events <- number_of_comparisons %>%
+  group_by(n_comparison) %>%
+ summarize(max_junction= max(paste_into_igv_junction)) 
+max_splicing_events
+install.packages("clipr")
+library(clipr)
+max_splicing_events |> colnames()  |> clipr::write_clip()
+# What splicing event occurs most frequently? (using slice_max)
+maximum_splicing_events <- number_of_comparisons %>%
+  group_by(n_comparison) %>%
+slice_max(paste_into_igv_junction, n = 1)
+maximum_splicing_events
+
+# Venn diagram
+install.packages("ggvenn")
+install.packages("ggVennDiagram")
+library(ggvenn)
+library(ggVennDiagram)
+
+significantly_spliced_junctions |> colnames()  |> clipr::write_clip()
+
+
+
+first_comparison <- significantly_spliced_junctions |>
+filter(comparison == "notdpkdrescuenotinduceda326p-sitdp43rescuenotinduceda326p") %>%
+pull(paste_into_igv_junction) 
+ 
+
+second_comparison <- significantly_spliced_junctions |>
+  filter(comparison == "sitdp43rescueinduceda326p-sitdp43rescuenotinduceda326p") %>%
+pull(paste_into_igv_junction) 
+
+junction_list <- list(junctions_normal_tdpkd = first_comparison, junctions_mutant_tdp= second_comparison)
+venn_diagram_1 <- ggVennDiagram(junction_list)
+venn_diagram_1
+
+#The  delta psi of the junction chr9:120404113-120408347 across all the different comparisons?
+
+delta_psi_chr_9 <- significantly_spliced_junctions %>%
+  group_by(mean_dpsi_per_lsv_junction) %>%
+  filter(paste_into_igv_junction == "chr9:120404113-120408347")
+delta_psi_chr_9
